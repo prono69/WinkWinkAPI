@@ -1,3 +1,5 @@
+import requests
+from bs4 import BeautifulSoup
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from itertools import islice
@@ -44,6 +46,40 @@ app.add_middleware(
 # ----- Helper Functions -----
 async def get_api_version():
     return API_VERSION
+    
+    
+async def HentaiAnime():
+    try:
+        page = random.randint(1, 1153)
+        response = requests.get(f'https://sfmcompile.club/page/{page}')
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        hasil = []
+        articles = soup.select('#primary > div > div > ul > li > article')
+        for article in articles:
+            title = article.select_one('header > h2').text
+            link = article.select_one('header > h2 > a')['href']
+            category = article.select_one('header > div.entry-before-title > span > span').text.replace('in ', '')
+            share_count = article.select_one('header > div.entry-after-title > p > span.entry-shares').text
+            views_count = article.select_one('header > div.entry-after-title > p > span.entry-views').text
+            type_ = article.select_one('source')['type'] if article.select_one('source') else 'image/jpeg'
+            video_1 = article.select_one('source')['src'] if article.select_one('source') else article.select_one('img')['data-src']
+            video_2 = article.select_one('video > a')['href'] if article.select_one('video > a') else ''
+            hasil.append({
+                "title": title,
+                "link": link,
+                "category": category,
+                "share_count": share_count,
+                "views_count": views_count,
+                "type": type_,
+                "video_1": video_1,
+                "video_2": video_2
+            })
+        if not hasil:
+            return {'developer': '@neomatrix90', 'error': 'no result found'}
+        return hasil
+    except Exception:
+        return None    
 
 # ----- API Endpoints -----
 @app.get("/", response_model=SuccessResponse)
@@ -151,3 +187,18 @@ async def protected_route(secret_key: Optional[str] = None):
         "secret_data": "🔐 You've unlocked premium content!",
         "access_level": "VIP"
     })
+    
+    
+@app.get("/prono/hentai", response_model=SuccessResponse)
+async def hentai_():
+    try:
+        response = await HentaiAnime()
+        return SuccessResponse(
+            status="True",
+            data={"results": response}
+        )
+    except:
+        return SuccessResponse(
+            status="False",
+            data={"error": "Error fucking"}
+        )    

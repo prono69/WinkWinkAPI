@@ -1,3 +1,5 @@
+bs4
+requests
 fastapi
 uvicorn[standard]
 httpx>=0.28.1
