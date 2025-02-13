@@ -1,4 +1,4 @@
-FROM python:3.9-slim-buster
+FROM python:3.9.5-buster
 
 # Install system dependencies as root
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -6,15 +6,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     curl \
     unzip \
-    libgconf-2-4 \
-    libnss3 \
-    libgl1 \
-    libx11-xcb1 \
-    libxcb-dri3-0 \
-    libdrm2 \
-    libgbm1 \
-    libasound2 && \
-    apt-get clean \
+    fonts-liberation \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libatspi2.0-0 \
+    libcairo2 \
+    libcups2 \
+    libgtk-3-0 \
+    libpango-1.0-0 \
+    libvulkan1 \
+    libxcomposite1 \
+    libxkbcommon0 \
+    libxrandr2 \
+    xdg-utils \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Chrome
