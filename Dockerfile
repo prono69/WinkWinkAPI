@@ -1,60 +1,81 @@
-FROM python:3.9.5-buster
+FROM python:3.9-slim-buster
 
 # Install system dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN apt -qq update && \
+    apt -qq install -y --no-install-recommends \
     curl \
     git \
     gnupg2 \
     unzip \
     wget \
     xvfb \
+    libxi6 \
     libgconf-2-4 \
-    libnss3 \
+    libappindicator3-1 \
     libxrender1 \
     libxtst6 \
+    libnss3 \
     libatk1.0-0 \
     libxss1 \
     fonts-liberation \
     libasound2 \
+    libgbm-dev \
+    libu2f-udev \
     libvulkan1 \
+    libgl1-mesa-dri \
     xdg-utils \
-    ffmpeg && \
+    python3-dev \
+    libavformat-dev \
+    libavcodec-dev \
+    libavdevice-dev \
+    libavfilter-dev \
+    libavutil-dev \
+    libswscale-dev \
+    libswresample-dev \
+    neofetch && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/
 
-# Install Chrome
-RUN mkdir -p /tmp/chrome && cd /tmp/chrome && \
-    wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
-    dpkg -i ./google-chrome*.deb || apt-get -y install -f && \
-    rm -rf /tmp/chrome
+# Install Chrome using your preferred method
+RUN mkdir -p /tmp/ && \
+    cd /tmp/ && \
+    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    dpkg -i ./google-chrome-stable_current_amd64.deb || apt-get install -fqqy && \
+    rm ./google-chrome-stable_current_amd64.deb
 
-# Install Chromedriver
-RUN mkdir -p /tmp/chromedriver && cd /tmp/chromedriver && \
-    wget -q https://chromedriver.storage.googleapis.com/$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip && \
-    unzip chromedriver.zip -d /usr/bin/ && \
+# Install Chromedriver using your specified method
+RUN mkdir -p /tmp/ && \
+    cd /tmp/ && \
+    wget -O chromedriver.zip https://chromedriver.storage.googleapis.com/$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip && \
+    unzip -o chromedriver.zip chromedriver -d /usr/bin/ && \
     chmod +x /usr/bin/chromedriver && \
-    rm -rf /tmp/chromedriver
+    rm chromedriver.zip
 
-# Non-root user setup
+# Create user with UID 1000
 RUN useradd -m -u 1000 user
+
+# Set environment variables
 ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH \
     CHROME_DRIVER=/usr/bin/chromedriver \
     CHROME_BIN=/usr/bin/google-chrome-stable \
     PYTHONUNBUFFERED=1
+
+# Set working directory
 WORKDIR $HOME/app
+
+# Switch to non-root user
 USER user
 
-# Python dependencies
+# Copy requirements first to leverage Docker cache
 COPY --chown=user requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Application code
+# Copy application code
 COPY --chown=user . .
 
-# Verification
+# Verification commands
 RUN google-chrome --version && chromedriver --version
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
