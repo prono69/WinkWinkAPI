@@ -60,7 +60,7 @@ async def xnxx_search(
     upload_time: Optional[str] = None,
     length: Optional[str] = None,
     mode: Optional[str] = None,
-    page: Optional[int] = None,
+    # page: Optional[int] = None,
     results: Optional[int] = 20
 ):
     data_dict = {
@@ -102,8 +102,8 @@ async def xnxx_search(
         if mode is not None:
             search_kwargs["mode"] = data_dict["mode"][mode]
           
-        if page is not None:
-            search_kwargs["limit"] = page
+        # if page is not None:
+            # search_kwargs["limit"] = page
             
         # Perform the search with only the provided parameters
         search = xnxx_client().search(**search_kwargs)
@@ -125,14 +125,14 @@ async def xnxx_search(
             })
         return SuccessResponse(
             status="True",
-            randydev={
+            data={
                 "results": results_list
             }
         )
     except Exception as e:
         return SuccessResponse(
             status="False",
-            randydev={"error": f"Error: {e}"}
+            data={"error": f"Error: {e}"}
         )
 
 @app.get("/protected", responses={
