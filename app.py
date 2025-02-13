@@ -1,4 +1,5 @@
 import requests
+import random
 from bs4 import BeautifulSoup
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
