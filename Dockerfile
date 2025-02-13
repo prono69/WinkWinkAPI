@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libdrm2 \
     libgbm1 \
     libasound2 && \
-    apt-get clean && \
+    apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Chrome
