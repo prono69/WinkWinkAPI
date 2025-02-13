@@ -1,23 +1,44 @@
 FROM python:3.9.5-buster
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    wget \
-    curl \
-    unzip \
-    libgconf-2-4 \
-    libnss3 \
-    libgl1 \
-    libx11-xcb1 \
-    libxcb-dri3-0 \
-    libdrm2 \
-    libgbm1 \
-    libasound2 \
-    fonts-liberation \
-    xdg-utils \
+RUN apt -qq update && \
+    apt -qq install -y --no-install-recommends \
     ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+    curl \
+    git \
+    gnupg2 \
+    unzip \
+    wget \
+    xvfb \
+    libxi6 \
+    libgconf-2-4 \
+    libappindicator3-1 \
+    libxrender1 \
+    libxtst6 \
+    libnss3 \
+    libatk1.0-0 \
+    libxss1 \
+    fonts-liberation \
+    libasound2 \
+    libgbm-dev \
+    libu2f-udev \
+    libvulkan1 \
+    libgl1-mesa-dri \
+    xdg-utils \
+    python3-dev \
+    python3-pip \
+    libavformat-dev \
+    libavcodec-dev \
+    libavdevice-dev \
+    libavfilter-dev \
+    libavutil-dev \
+    libswscale-dev \
+    libswresample-dev \
+    chromium \
+    chromium-driver \
+    neofetch && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/
 
 # Install Chrome using your preferred method
 RUN mkdir -p /tmp/ && \
