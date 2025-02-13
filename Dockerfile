@@ -1,41 +1,38 @@
 FROM python:3.9.5-buster
 
-# Install system dependencies as root
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     wget \
     curl \
     unzip \
-    fonts-liberation \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libatspi2.0-0 \
-    libcairo2 \
-    libcups2 \
-    libgtk-3-0 \
-    libpango-1.0-0 \
-    libvulkan1 \
-    libxcomposite1 \
-    libxkbcommon0 \
-    libxrandr2 \
-    xdg-utils \
-    libnss3  \
-    libnspr4 \
+    libgconf-2-4 \
+    libnss3 \
+    libgl1 \
+    libx11-xcb1 \
+    libxcb-dri3-0 \
+    libdrm2 \
     libgbm1 \
+    libasound2 \
+    fonts-liberation \
+    xdg-utils \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Chrome
-RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && apt-get install -y ./google-chrome-stable_current_amd64.deb \
-    && rm google-chrome-stable_current_amd64.deb
+# Install Chrome using your preferred method
+RUN mkdir -p /tmp/ && \
+    cd /tmp/ && \
+    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    dpkg -i ./google-chrome-stable_current_amd64.deb || apt-get install -fqqy && \
+    rm ./google-chrome-stable_current_amd64.deb
 
-# Install matching Chromedriver
-RUN CHROME_VERSION=$(google-chrome --version | cut -d ' ' -f3 | cut -d '.' -f1) \
-    && wget -q https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION} \
-    && wget -q https://chromedriver.storage.googleapis.com/$(cat LATEST_RELEASE_${CHROME_VERSION})/chromedriver_linux64.zip \
-    && unzip chromedriver_linux64.zip -d /usr/bin/ \
-    && rm chromedriver_linux64.zip LATEST_RELEASE_${CHROME_VERSION}
+# Install Chromedriver using your specified method
+RUN mkdir -p /tmp/ && \
+    cd /tmp/ && \
+    wget -O chromedriver.zip https://chromedriver.storage.googleapis.com/$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip && \
+    unzip -o chromedriver.zip chromedriver -d /usr/bin/ && \
+    chmod +x /usr/bin/chromedriver && \
+    rm chromedriver.zip
 
 # Create user with UID 1000
 RUN useradd -m -u 1000 user
@@ -60,5 +57,8 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 # Copy application code
 COPY --chown=user . .
+
+# Verification commands
+RUN google-chrome --version && chromedriver --version
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
