@@ -19,6 +19,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxkbcommon0 \
     libxrandr2 \
     xdg-utils \
+    libnss3  \
+    libnspr4 \
+    libgbm1 \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
