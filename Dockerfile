@@ -59,7 +59,7 @@ ENV HOME=/home/user \
     CHROME_DRIVER=/usr/bin/chromedriver \
     CHROME_BIN=/usr/bin/google-chrome-stable \
     PYTHONUNBUFFERED=1 \
-    PIP_CACHE_DIR=/home/user/.cache/pip  # Add pip cache directory
+    PIP_CACHE_DIR=/home/user/.cache/pip
 
 # Set working directory
 WORKDIR $HOME/app
