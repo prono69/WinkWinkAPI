@@ -1,9 +1,10 @@
-FROM python:3.9.5-slim-buster
+FROM python:3.11.11-bullseye
 
 # Install system dependencies
 RUN apt -qq update && \
     apt -qq install -y --no-install-recommends \
     curl \
+    ca-certificates \
     git \
     gnupg2 \
     unzip \
@@ -35,20 +36,6 @@ RUN apt -qq update && \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/
 
-# Install Chrome
-RUN mkdir -p /tmp/ && \
-    cd /tmp/ && \
-    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
-    dpkg -i ./google-chrome-stable_current_amd64.deb || apt-get install -fqqy && \
-    rm ./google-chrome-stable_current_amd64.deb
-
-# Install Chromedriver
-RUN mkdir -p /tmp/ && \
-    cd /tmp/ && \
-    wget -O chromedriver.zip https://chromedriver.storage.googleapis.com/$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip && \
-    unzip -o chromedriver.zip chromedriver -d /usr/bin/ && \
-    chmod +x /usr/bin/chromedriver && \
-    rm chromedriver.zip
 
 # Create user with UID 1000
 RUN useradd -m -u 1000 user
@@ -56,8 +43,6 @@ RUN useradd -m -u 1000 user
 # Set environment variables
 ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH \
-    CHROME_DRIVER=/usr/bin/chromedriver \
-    CHROME_BIN=/usr/bin/google-chrome-stable \
     PYTHONUNBUFFERED=1 \
     PIP_CACHE_DIR=/home/user/.cache/pip
 
@@ -77,8 +62,5 @@ RUN pip install --upgrade pip \
 
 # Copy application code
 COPY --chown=user . .
-
-# Verification commands
-RUN google-chrome --version && chromedriver --version
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]

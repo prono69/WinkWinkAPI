@@ -7,7 +7,7 @@ from itertools import islice
 from typing import Dict, Any, Optional
 from fastapi.middleware.cors import CORSMiddleware
 from xnxx_api import search_filters
-from xnxx_api.xnxx_api import Client as xnxx_client
+from xnxx_api import Client as xnxx_client
 
 # Constants
 CREATOR = "EyePatch"
@@ -155,9 +155,9 @@ async def xnxx_search(
                 "url": x.url,
                 "author": x.author,
                 "length": x.length,
-                "highest_quality": x.highest_quality,
+                # "highest_quality": x.highest_quality,
                 "publish_date": x.publish_date,
-                "views": x.views,
+                # "views": x.views,
                 "thumb": x.thumbnail_url[0] if isinstance(x.thumbnail_url, list) and len(x.thumbnail_url) > 0 else None
             })
         return SuccessResponse(
