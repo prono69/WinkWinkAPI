@@ -2,36 +2,14 @@ import requests
 import random
 from bs4 import BeautifulSoup
 from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel
 from itertools import islice
-from typing import Dict, Any, Optional
+from models import SuccessResponse, ErrorResponse, API_VERSION
 from fastapi.middleware.cors import CORSMiddleware
 from xnxx_api import search_filters
 from xnxx_api import Client as xnxx_client
+from xvideos_api import Client as xvid_client
+from xvideos_api import sorting
 
-# Constants
-CREATOR = "EyePatch"
-API_VERSION = "1.3.0"
-
-# ----- Pydantic Models -----
-class SuccessResponse(BaseModel):
-    creator: str = CREATOR
-    status: str = "success"
-    api_version: str = API_VERSION
-    data: Dict[str, Any]
-
-class ErrorResponse(BaseModel):
-    status: str = "error"
-    creator: str = CREATOR
-    api_version: str = API_VERSION
-    error_code: int
-    message: str
-
-class ItemPayload(BaseModel):
-    name: str
-    description: Optional[str] = None
-    price: float
-    tags: list[str] = []
 
 # ----- FastAPI Setup -----
 app = FastAPI(title="Awesome API", version=API_VERSION)
@@ -89,6 +67,25 @@ async def root(version: str = Depends(get_api_version)):
     return SuccessResponse(data={
         "message": "Service operational",
     })
+    
+    
+@app.get("/protected", responses={
+    200: {"model": SuccessResponse},
+    403: {"model": ErrorResponse}
+})
+async def protected_route(secret_key: Optional[str] = None):
+    """Endpoint demonstrating error responses"""
+    if not secret_key or secret_key != "supersecret123":
+        return ErrorResponse(
+            error_code=403,
+            message="Invalid or missing secret key"
+        )
+    
+    return SuccessResponse(data={
+        "secret_data": "🔐 You've unlocked premium content!",
+        "access_level": "VIP"
+    })    
+    
 
 @app.get("/prono/xnxxsearch", response_model=SuccessResponse)
 async def xnxx_search(
@@ -143,13 +140,14 @@ async def xnxx_search(
             # search_kwargs["limit"] = page
             
         # Perform the search with only the provided parameters
-        search = xnxx_client().search(**search_kwargs)
-        res = search.videos
-        if results is not None:
-            response = islice(res, results)
+        c = xnxx_client()
+        search = c.search(**search_kwargs)
+        # response = search.videos
+        # if results is not None:
+            # response = islice(res, results)
 
         results_list = []
-        for x in response:
+        for x in islice(search.videos, results):
             results_list.append({
                 "title": x.title,
                 "url": x.url,
@@ -161,7 +159,6 @@ async def xnxx_search(
                 "thumb": x.thumbnail_url[0] if isinstance(x.thumbnail_url, list) and len(x.thumbnail_url) > 0 else None
             })
         return SuccessResponse(
-            status="True",
             data={
                 "results": results_list
             }
@@ -171,23 +168,6 @@ async def xnxx_search(
             status="False",
             data={"error": f"Error: {e}"}
         )
-
-@app.get("/protected", responses={
-    200: {"model": SuccessResponse},
-    403: {"model": ErrorResponse}
-})
-async def protected_route(secret_key: Optional[str] = None):
-    """Endpoint demonstrating error responses"""
-    if not secret_key or secret_key != "supersecret123":
-        return ErrorResponse(
-            error_code=403,
-            message="Invalid or missing secret key"
-        )
-    
-    return SuccessResponse(data={
-        "secret_data": "🔐 You've unlocked premium content!",
-        "access_level": "VIP"
-    })
     
     
 @app.get("/prono/hentai", response_model=SuccessResponse)
@@ -203,3 +183,139 @@ async def hentai_():
             status="False",
             data={"error": "Error fucking"}
         )    
+
+
+@app.get("/prono/xnxx-dl", response_model=SuccessResponse, responses={422: {"model": SuccessResponse}})
+async def xnxx_download(link: str):
+    try:
+        x = xnxx_client()
+        response = x.get_video(link)
+        return SuccessResponse(
+            data={
+                "results": {
+                    "title": response.title,
+                    "author": response.author,
+                    "length": f"{response.length} min",
+                    "highest_quality": response.highest_quality,
+                    "publish_date": response.publish_date,
+                    "views": response.views,
+                    "link": response.content_url,
+                    "thumb": response.thumbnail_url[0] if isinstance(response.thumbnail_url, list) and len(response.thumbnail_url) > 0 else None
+                }
+            }
+        )
+
+    except Exception as e:
+        return SuccessResponse(
+            status="False",
+            randydev={"error": f"Error fucking: {e}"}
+        )
+
+
+@app.get("/prono/xvidsearch", response_model=SuccessResponse)
+async def xvid_search(
+    query: str,
+    quality: Optional[str] = None,
+    upload_time: Optional[str] = None,
+    length: Optional[str] = None,
+    mode: Optional[str] = None,
+    # page: Optional[int] = None,
+    results: Optional[int] = 20
+):
+    data_dict = {
+        "quality": {
+            "720p": sorting.SortQuality.Sort_720p,
+            "1080p": sorting.SortQuality.Sort_1080_plus
+        },
+        "upload_time": {
+            "3months": sorting.SortDateSort_last_3_months,
+            "6months": sorting.SortDateSort_last_6_months
+        },
+        "length": {
+            "0-10min": sorting.SortVideoTime.Sort_middle,
+            "10min+": sorting.SortVideoTime.Sort_long,
+            "10-20min": sorting.SortVideoTime.Sort_long_10_20min,
+            "20min+": sorting.SortVideoTime.Sort_really_long
+        },
+        "mode": {
+            "rating": sorting.Sort.Sort_rating,
+            "views": sorting.Sort.Sort_views,
+            "random": sorting.Sort.Sort_random,
+            "relevance": sorting.Sort.Sort_relevance
+        }
+    }
+
+    try:
+        # Prepare search parameters
+        search_kwargs = {
+            "query": query
+        }
+        if length is not None:
+            search_kwargs["sorting_time"] = data_dict["length"][length]
+            
+        if quality is not None:
+          search_kwargs["sort_quality"] = data_dict["quality"][quality]
+            
+        if upload_time is not None:
+            search_kwargs["sorting_time"] = data_dict["upload_time"][upload_time]
+            
+        if mode is not None:
+            search_kwargs["sorting_sort"] = data_dict["mode"][mode]
+          
+            
+        # Perform the search with only the provided parameters
+        c = xvid_client()
+        search = c.search(**search_kwargs)
+        # response = search.videos
+        # if results is not None:
+            # response = islice(res, results)
+
+        results_list = []
+        for x in islice(search, results):
+            results_list.append({
+                "title": x.title,
+                "url": x.url,
+                "author": x.author,
+                "length": x.length,
+                "publish_date": x.publish_date,
+                "views": x.views,
+                "thumb": x.thumbnail_url
+            })
+        return SuccessResponse(
+            data={
+                "results": results_list
+            }
+        )
+    except Exception as e:
+        return SuccessResponse(
+            status="False",
+            data={"error": f"Error: {e}"}
+        )
+
+
+@app.get("/prono/xvid-dl", response_model=SuccessResponse, responses={422: {"model": SuccessResponse}})
+async def xvid_download(link: str):
+    try:
+        x = xvid_client()
+        response = x.get_video(link)
+        return SuccessResponse(
+            data={
+                "results": {
+                    "title": response.title,
+                    "description": response.description,
+                    "author": response.author,
+                    "length": response.length,
+                    "tags": response.tags,
+                    "publish_date": response.publish_date,
+                    "views": response.views,
+                    "link": response.cdn_url,
+                    "thumb": response.thumbnail_url
+                }
+            }
+        )
+
+    except Exception as e:
+        return SuccessResponse(
+            status="False",
+            randydev={"error": f"Error fucking: {e}"}
+        )
