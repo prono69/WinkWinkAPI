@@ -229,8 +229,8 @@ async def xvid_search(
             "1080p": sorting.SortQuality.Sort_1080_plus
         },
         "upload_time": {
-            "3months": sorting.SortDate.SortDateSort_last_3_months,
-            "6months": sorting.SortDate.SortDateSort_last_6_months
+            "3months": sorting.SortDate.Sort_last_3_months,
+            "6months": sorting.SortDate.Sort_last_6_months
         },
         "length": {
             "0-10min": sorting.SortVideoTime.Sort_middle,
