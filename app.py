@@ -3,6 +3,7 @@ import random
 from bs4 import BeautifulSoup
 from fastapi import FastAPI, HTTPException, Depends
 from itertools import islice
+from typing import Optional
 from models import SuccessResponse, ErrorResponse, API_VERSION
 from fastapi.middleware.cors import CORSMiddleware
 from xnxx_api import search_filters
