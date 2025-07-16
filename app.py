@@ -376,15 +376,17 @@ async def eporner_search(
         results_list = []
         for video in videos:
             results_list.append({
+                "id": video.video_id,
                 "title": video.title,
-                "url": video.url,
+                # "url": video.url,
                 "length": video.length,
+                "length_minutes": video.length_minutes,
                 "views": video.views,
                 "rate": video.rate,
                 "publish_date": video.publish_date,
                 "thumbnail": video.thumbnail,
                 "tags": video.tags,
-                "pornstars": video.pornstars,
+                # "pornstars": video.pornstars,
                 "embed_url": video.embed_url
             })
 
