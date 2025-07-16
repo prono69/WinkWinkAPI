@@ -324,38 +324,57 @@ async def xvid_download(link: str):
         
         
 # --- Eporner Search Endpoint ---
+from eporner_api import Client as eporner_client, sorting as eporner_sort
+
 @app.get("/prono/epornersearch", response_model=SuccessResponse)
 async def eporner_search(
     query: str,
-    page: Optional[int] = 0,
+    sorting_order: Optional[str] = "latest",
+    sorting_gay: Optional[str] = "0",
+    sorting_low_quality: Optional[str] = "0",
+    page: Optional[int] = 1,
     per_page: Optional[int] = 20,
-    sorting_order: Optional[str] = None,
-    sorting_gay: Optional[bool] = False,
-    sorting_low_quality: Optional[bool] = False,
 ):
     try:
-        client = eporner_client()
-        # Set sorting options if provided
-        search_kwargs = {
-            "query": query,
-            "page": page,
-            "per_page": per_page
-            # "sorting_gay": sorting_gay,
-            # "sorting_low_quality": sorting_low_quality
-        }
+        # Validate and resolve sorting order
+        if sorting_order not in {
+            eporner_sort.Order.latest,
+            eporner_sort.Order.longest,
+            eporner_sort.Order.shortest,
+            eporner_sort.Order.top_rated,
+            eporner_sort.Order.most_popular,
+            eporner_sort.Order.top_weekly,
+            eporner_sort.Order.top_monthly
+        }:
+            raise ValueError(f"Invalid sorting_order: {sorting_order}")
 
-        if sorting_order:
-            from eporner_api.modules.sorting import Order
-            order_map = {
-                "newest": Order.newest,
-                "longest": Order.longest,
-                "top_rated": Order.top_rated,
-                "most_viewed": Order.most_viewed
-            }
-            search_kwargs["sorting_order"] = order_map.get(sorting_order)
+        if sorting_gay not in {
+            eporner_sort.Gay.exclude_gay_content,
+            eporner_sort.Gay.include_gay_content,
+            eporner_sort.Gay.only_gay_content
+        }:
+            raise ValueError(f"Invalid sorting_gay: {sorting_gay}")
+
+        if sorting_low_quality not in {
+            eporner_sort.LowQuality.exclude_low_quality_content,
+            eporner_sort.LowQuality.include_low_quality_content,
+            eporner_sort.LowQuality.only_low_quality_content
+        }:
+            raise ValueError(f"Invalid sorting_low_quality: {sorting_low_quality}")
+
+        client = eporner_client()
+
+        videos = client.search_videos(
+            query,
+            sorting_gay,
+            sorting_order,
+            sorting_low_quality,
+            page,
+            per_page
+        )
 
         results_list = []
-        for video in client.search_videos(**search_kwargs):
+        for video in videos:
             results_list.append({
                 "title": video.title,
                 "url": video.url,
@@ -368,9 +387,8 @@ async def eporner_search(
                 "pornstars": video.pornstars,
                 "embed_url": video.embed_url
             })
-        return SuccessResponse(
-            data={"results": results_list}
-        )
+
+        return SuccessResponse(data={"results": results_list})
 
     except Exception as e:
         return SuccessResponse(
