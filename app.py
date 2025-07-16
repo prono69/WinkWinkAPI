@@ -10,6 +10,7 @@ from xnxx_api import search_filters
 from xnxx_api import Client as xnxx_client
 from xvideos_api import Client as xvid_client
 from xvideos_api import sorting
+from eporner_api import Client as eporner_client, Encoding
 
 
 # ----- FastAPI Setup -----
@@ -319,4 +320,60 @@ async def xvid_download(link: str):
         return SuccessResponse(
             status="False",
             randydev={"error": f"Error fucking: {e}"}
+        )
+        
+        
+# --- Eporner Search Endpoint ---
+@app.get("/prono/epornersearch", response_model=SuccessResponse)
+async def eporner_search(
+    query: str,
+    page: Optional[int] = 0,
+    per_page: Optional[int] = 20,
+    sorting_order: Optional[str] = None,
+    sorting_gay: Optional[bool] = False,
+    sorting_low_quality: Optional[bool] = False,
+):
+    try:
+        client = eporner_client()
+        # Set sorting options if provided
+        search_kwargs = {
+            "query": query,
+            "page": page,
+            "per_page": per_page
+            # "sorting_gay": sorting_gay,
+            # "sorting_low_quality": sorting_low_quality
+        }
+
+        if sorting_order:
+            from eporner_api.modules.sorting import Order
+            order_map = {
+                "newest": Order.newest,
+                "longest": Order.longest,
+                "top_rated": Order.top_rated,
+                "most_viewed": Order.most_viewed
+            }
+            search_kwargs["sorting_order"] = order_map.get(sorting_order)
+
+        results_list = []
+        for video in client.search_videos(**search_kwargs):
+            results_list.append({
+                "title": video.title,
+                "url": video.url,
+                "length": video.length,
+                "views": video.views,
+                "rate": video.rate,
+                "publish_date": video.publish_date,
+                "thumbnail": video.thumbnail,
+                "tags": video.tags,
+                "pornstars": video.pornstars,
+                "embed_url": video.embed_url
+            })
+        return SuccessResponse(
+            data={"results": results_list}
+        )
+
+    except Exception as e:
+        return SuccessResponse(
+            status="False",
+            data={"error": f"Search failed: {e}"}
         )
