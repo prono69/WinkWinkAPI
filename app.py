@@ -411,7 +411,7 @@ async def eporner_download(link: str):
                     "length": video.length,
                     "length_minutes": video.length_minutes,
                     "views": video.views,
-                    "rate": video.rating,
+                    "rate": video.rate,
                     "rate_count": video.rating_count,
                     "publish_date": video.publish_date,
                     "tags": video.tags,
