@@ -10,11 +10,11 @@ from xnxx_api import search_filters
 from xnxx_api import Client as xnxx_client
 from xvideos_api import Client as xvid_client
 from xvideos_api import sorting
-from eporner_api import Client as eporner_client, Encoding
+from eporner_api import Client as eporner_client, sorting as eporner_sort
 
 
 # ----- FastAPI Setup -----
-app = FastAPI(title="Awesome API", version=API_VERSION)
+app = FastAPI(title="Cultured API", version=API_VERSION)
 
 # CORS Configuration
 app.add_middleware(
@@ -324,16 +324,14 @@ async def xvid_download(link: str):
         
         
 # --- Eporner Search Endpoint ---
-from eporner_api import Client as eporner_client, sorting as eporner_sort
-
 @app.get("/prono/epornersearch", response_model=SuccessResponse)
 async def eporner_search(
     query: str,
     sorting_order: Optional[str] = "latest",
     sorting_gay: Optional[str] = "0",
     sorting_low_quality: Optional[str] = "0",
-    page: Optional[int] = 1,
-    per_page: Optional[int] = 20,
+    page: Optional[int] = 0,
+    per_page: Optional[int] = 10,
 ):
     try:
         # Validate and resolve sorting order
@@ -378,7 +376,7 @@ async def eporner_search(
             results_list.append({
                 "id": video.video_id,
                 "title": video.title,
-                # "url": video.url,
+                "url": video.link,
                 "length": video.length,
                 "length_minutes": video.length_minutes,
                 "views": video.views,
@@ -386,8 +384,6 @@ async def eporner_search(
                 "publish_date": video.publish_date,
                 "thumbnail": video.thumbnail,
                 "tags": video.tags,
-                # "pornstars": video.pornstars,
-                "embed_url": video.embed_url
             })
 
         return SuccessResponse(data={"results": results_list})
@@ -397,3 +393,40 @@ async def eporner_search(
             status="False",
             data={"error": f"Search failed: {e}"}
         )
+        
+        
+# --- Eporner Download Info ---
+@app.get("/prono/eporner-dl", response_model=SuccessResponse)
+async def eporner_download(link: str):
+    try:
+        client = eporner_client()
+        video = client.get_video(link, enable_html_scraping=True)
+
+        return SuccessResponse(
+            data={
+                "results": {
+                    "title": video.title,
+                    # "description": video.html_content,
+                    "author": video.author,
+                    "length": video.length,
+                    "length_minutes": video.length_minutes,
+                    "views": video.views,
+                    "rate": video.rating,
+                    "rate_count": video.rating_count,
+                    "publish_date": video.publish_date,
+                    "tags": video.tags,
+                    "likes": video.likes,
+                    "dislikes": video.dislikes,
+                    "source_url": video.source_video_url,
+                    "bitrate": video.bitrate,
+                    # "download_link": video.download(quality="best", path="./", mode=Encoding.mp4_h264),
+                    "thumbnail": video.thumbnail
+                }
+            }
+        )
+
+    except Exception as e:
+        return SuccessResponse(
+            status="False",
+            data={"error": f"Download info failed: {e}"}
+        )        
