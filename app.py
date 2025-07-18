@@ -1,7 +1,11 @@
 import requests
 import random
 from bs4 import BeautifulSoup
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+import os
 from itertools import islice
 from typing import Optional
 from models import SuccessResponse, ErrorResponse, API_VERSION
@@ -11,6 +15,7 @@ from xnxx_api import Client as xnxx_client
 from xvideos_api import Client as xvid_client
 from xvideos_api import sorting
 from eporner_api import Client as eporner_client, sorting as eporner_sort
+from hqporner_api import Client as hqporner_client
 
 
 # ----- FastAPI Setup -----
@@ -23,6 +28,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+templates = Jinja2Templates(directory="templates")
 
 # ----- Helper Functions -----
 async def get_api_version():
@@ -60,11 +67,34 @@ async def HentaiAnime():
             return {'developer': '@neomatrix90', 'error': 'no result found'}
         return hasil
     except Exception:
-        return None    
+        return None
+        
+# Safe attribute getter
+def safe_get(obj, attr, default="Not available"):
+    return getattr(obj, attr, default)
+    
+# Mount static folder
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Serve favicon
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse(os.path.join("static", "favicon.ico"))
 
 # ----- API Endpoints -----
-@app.get("/", response_model=SuccessResponse)
-async def root(version: str = Depends(get_api_version)):
+
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse("preview.html", {
+        "request": request,
+        "title": "Cultured API",
+        "description": "A NSFW Fast API to Search/Download videos from some sources. Comes with Swagger UI.",
+        "image_url": "https://files.catbox.moe/pwr4s2.jpg",
+        "url": "https://napi.ichigo.eu.org/"
+    })
+
+@app.get("/check", response_model=SuccessResponse)
+async def health_check(version: str = Depends(get_api_version)):
     """Service health check endpoint"""
     return SuccessResponse(data={
         "message": "Service operational",
@@ -88,7 +118,7 @@ async def protected_route(secret_key: Optional[str] = None):
         "access_level": "VIP"
     })    
     
-
+# --- Xnxx Search Endpoint ---
 @app.get("/prono/xnxxsearch", response_model=SuccessResponse)
 async def xnxx_search(
     query: str,
@@ -171,7 +201,7 @@ async def xnxx_search(
             data={"error": f"Error: {e}"}
         )
     
-    
+# --- Random Hentai Endpoint ---
 @app.get("/prono/hentai", response_model=SuccessResponse)
 async def hentai_():
     try:
@@ -186,7 +216,7 @@ async def hentai_():
             data={"error": "Error fucking"}
         )    
 
-
+# --- Xnxx Download Info ---
 @app.get("/prono/xnxx-dl", response_model=SuccessResponse, responses={422: {"model": SuccessResponse}})
 async def xnxx_download(link: str):
     try:
@@ -214,6 +244,7 @@ async def xnxx_download(link: str):
         )
 
 
+# --- Xvideos Search Endpoint ---
 @app.get("/prono/xvidsearch", response_model=SuccessResponse)
 async def xvid_search(
     query: str,
@@ -295,6 +326,7 @@ async def xvid_search(
         )
 
 
+# --- Xvideos Download Info ---
 @app.get("/prono/xvid-dl", response_model=SuccessResponse, responses={422: {"model": SuccessResponse}})
 async def xvid_download(link: str):
     try:
@@ -405,28 +437,60 @@ async def eporner_download(link: str):
         return SuccessResponse(
             data={
                 "results": {
-                    "title": video.title,
-                    # "description": video.html_content,
-                    "author": video.author,
-                    "length": video.length,
-                    "length_minutes": video.length_minutes,
-                    "views": video.views,
-                    "rate": video.rate,
-                    # "rate_count": video.rating_count,
-                    "publish_date": video.publish_date,
-                    "tags": video.tags,
-                    "likes": video.likes,
-                    "dislikes": video.dislikes,
-                    "source_url": video.source_video_url,
-                    "bitrate": video.bitrate,
+                    "title": safe_get(video, "title"),
+                    # "description": safe_get(video, "html_content"),
+                    "author": safe_get(video, "author"),
+                    "length": safe_get(video, "length"),
+                    "length_minutes": safe_get(video, "length_minutes"),
+                    "views": safe_get(video, "views"),
+                    "rate": safe_get(video, "rate"),
+                    # "rate_count": safe_get(video, "rating_count"),
+                    "publish_date": safe_get(video, "publish_date"),
+                    "tags": safe_get(video, "tags", []),
+                    "likes": safe_get(video, "likes"),
+                    "dislikes": safe_get(video, "dislikes"),
+                    "source_url": safe_get(video, "source_video_url"),
+                    "bitrate": safe_get(video, "bitrate"),
                     # "download_link": video.download(quality="best", path="./", mode=Encoding.mp4_h264),
-                    "thumbnail": video.thumbnail
+                    "thumbnail": safe_get(video, "thumbnail")
                 }
             }
         )
 
     except Exception as e:
+        return ErrorResponse(
+            error_code=500,
+            message=f"Download info failed: {e}"
+        )
+        
+        
+# --- HQPorner Search Endpoint ---
+@app.get("/prono/hqpornersearch", response_model=SuccessResponse)
+async def hqporner_search(
+    query: str,
+    pages: Optional[int] = 1,
+    limit: Optional[int] = 10
+):
+    try:
+        client = hqporner_client()
+        videos = client.search(query, pages=pages)
+
+        results_list = []
+        for video in islice(videos, limit):
+            results_list.append({
+                "title": safe_get(video, "title"),
+                "url": safe_get(video, "url"),
+                "length": safe_get(video, "length"),
+                "pornstars": safe_get(video, "pornstars", []),
+                "publish_date": safe_get(video, "publish_date"),
+                "tags": safe_get(video, "tags", [])
+            })
+
+        return SuccessResponse(data={"results": results_list})
+
+    except Exception as e:
+        # Technically this should return ErrorResponse, but preserving your original style
         return SuccessResponse(
-            status="False",
-            data={"error": f"Download info failed: {e}"}
-        )        
+            status="error",
+            data={"error": f"HQPorner search failed: {e}"}
+        )

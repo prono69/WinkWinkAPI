@@ -8,3 +8,4 @@ phub
 xnxx_api
 xvideos_api
 git+https://github.com/prono69/EPorner_API.git
+git+https://github.com/EchterAlsFake/hqporner_api.git

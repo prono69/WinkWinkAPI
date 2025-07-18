@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title }}</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
+
+  <!-- Meta -->
+  <meta property="og:title" content="{{ title }}" />
+  <meta property="og:description" content="{{ description }}" />
+  <meta property="og:image" content="https://files.catbox.moe/0sdw41.jpg" />
+  <meta property="og:url" content="{{ url }}" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Styles & Particles -->
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div id="tsparticles"></div>
+
+  <!-- 🔹 Header Row -->
+  <div class="header-row">
+    <div class="title-logo">
+      <img src="https://cdn.jsdelivr.net/gh/prono69/Files@main/icons/png/cute-grim-reaper.png" alt="Logo" class="logo-icon" />
+      <span class="title-text">{{ title }}</span>
+    </div>
+    <div class="toggle-container">
+      <span id="theme-icon" class="theme-icon">🌙</span>
+      <label class="switch">
+        <input type="checkbox" id="darkToggle" checked>
+        <span class="slider round"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- 🔹 Main Card -->
+  <div class="card">
+    <img class="preview-img" src="{{ image_url }}" alt="Preview Image" />
+    <h1>{{ title }}</h1>
+    <p>{{ description }}</p>
+    <a href="/docs" class="btn" target="_blank">🚀 Open Swagger UI</a>
+  </div>
+
+  <!-- 🔹 Social Footer -->
+  <div class="footer">
+    <a href="https://github.com/your-profile" target="_blank"><img src="https://img.icons8.com/?size=100&id=118553&format=png&color=000000" alt="GitHub" /></a>
+    <a href="https://t.me/yourchannel" target="_blank"><img src="https://img.icons8.com/?size=100&id=112159&format=png&color=000000" alt="Telegram" /></a>
+    <a href="https://twitter.com/yourhandle" target="_blank"><img src="https://img.icons8.com/?size=100&id=I02TdaPxbwRz&format=png&color=000000" alt="X" /></a>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
+  <script src="/static/js/particles.js"></script>
+  <script>
+    const toggle = document.getElementById("darkToggle");
+    const icon = document.getElementById("theme-icon");
+
+    toggle.addEventListener("change", () => {
+      const isDark = toggle.checked;
+      document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+      icon.textContent = isDark ? "🌙" : "☀️";
+    });
+  </script>
+</body>
+</html>
