@@ -6,6 +6,8 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
+import time
+import datetime
 from itertools import islice
 from typing import Optional
 from models import SuccessResponse, ErrorResponse, API_VERSION
@@ -30,11 +32,11 @@ app.add_middleware(
 )
 
 templates = Jinja2Templates(directory="templates")
+SERVER_START_TIME = datetime.datetime.utcnow()
 
 # ----- Helper Functions -----
 async def get_api_version():
     return API_VERSION
-    
     
 async def HentaiAnime():
     try:
@@ -68,10 +70,26 @@ async def HentaiAnime():
         return hasil
     except Exception:
         return None
-        
+
 # Safe attribute getter
 def safe_get(obj, attr, default="Not available"):
     return getattr(obj, attr, default)
+    
+def format_uptime(start_time):
+    delta = datetime.datetime.utcnow() - start_time
+    days = delta.days
+    hours, remainder = divmod(delta.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    parts = []
+    if days:
+        parts.append(f"{days} day{'s' if days > 1 else ''}")
+    if hours:
+        parts.append(f"{hours} hour{'s' if hours > 1 else ''}")
+    if minutes:
+        parts.append(f"{minutes} minute{'s' if minutes > 1 else ''}")
+    if not parts:
+        parts.append(f"{seconds} seconds")
+    return ", ".join(parts)
     
 # Mount static folder
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -116,7 +134,46 @@ async def protected_route(secret_key: Optional[str] = None):
     return SuccessResponse(data={
         "secret_data": "🔐 You've unlocked premium content!",
         "access_level": "VIP"
-    })    
+    })
+
+    
+@app.get("/ping", response_model=SuccessResponse)
+async def ping_check():
+    start_time = time.perf_counter()
+    await asyncio.sleep(0)
+    end_time = time.perf_counter()
+    latency_ms = round((end_time - start_time) * 1000, 2)
+
+    if latency_ms < 50:
+        message = "⚡ Super fast! Everything’s snappy!"
+        level = "green"
+        rank = 3
+    elif latency_ms < 150:
+        message = "🚀 Fast! Good response time."
+        level = "lightgreen"
+        rank = 2
+    elif latency_ms < 300:
+        message = "🚦 Moderate speed. Not bad."
+        level = "yellow"
+        rank = 1
+    elif latency_ms < 600:
+        message = "🐢 A bit slow. Could be better."
+        level = "orange"
+        rank = 0
+    else:
+        message = "🐌 Very slow. Time to wake up the servers!"
+        level = "red"
+        rank = -1
+
+    uptime = format_uptime(SERVER_START_TIME)
+
+    return SuccessResponse(data={
+        "ping": f"{latency_ms} ms",
+        "message": message,
+        "status_level": level,
+        "status_rank": rank,
+        "uptime": uptime
+    })
     
 # --- Xnxx Search Endpoint ---
 @app.get("/prono/xnxxsearch", response_model=SuccessResponse)
