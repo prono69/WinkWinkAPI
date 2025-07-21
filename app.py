@@ -531,7 +531,7 @@ async def hqporner_search(
 ):
     try:
         client = hqporner_client()
-        videos = client.search(query, pages=pages)
+        videos = client.search_videos(query, pages=pages)
 
         results_list = []
         for video in islice(videos, limit):
