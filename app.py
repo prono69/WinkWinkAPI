@@ -1,6 +1,7 @@
 import requests
 import aiohttp
 import random
+import json
 from bs4 import BeautifulSoup
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.responses import FileResponse, HTMLResponse
@@ -566,10 +567,17 @@ async def random_cecan(name: str):
                         status="False",
                         data={"error": f"File not found or invalid name: {name}"}
                     )
-                data = await resp.json()
+                text = await resp.text()
+                try:
+                    data = json.loads(text)
+                except json.JSONDecodeError:
+                    return SuccessResponse(
+                        status="False",
+                        data={"error": "Invalid JSON format in source file"}
+                    )
         
-        # Expecting JSON file structure like: { "result": ["https://link1", "https://link2", ...] }
-        links = data.get("result") or data  # fallback if plain list
+        # The file may look like {"result": ["link1", "link2", ...]} or just ["link1", ...]
+        links = data.get("result") if isinstance(data, dict) else data
         if not links:
             return SuccessResponse(
                 status="False",
@@ -587,4 +595,4 @@ async def random_cecan(name: str):
         return SuccessResponse(
             status="False",
             data={"error": f"Error: {e}"}
-        )        
+        )
