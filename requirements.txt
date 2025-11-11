@@ -1,5 +1,6 @@
 bs4
 requests
+aiohttp
 fastapi
 uvicorn[standard]
 httpx>=0.28.1

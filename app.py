@@ -1,4 +1,5 @@
 import requests
+import aiohttp
 import random
 from bs4 import BeautifulSoup
 from fastapi import FastAPI, HTTPException, Depends, Request
@@ -552,3 +553,38 @@ async def hqporner_search(
             status="error",
             data={"error": f"HQPorner search failed: {e}"}
         )
+        
+# --- Random Girls Pics Endpoint ---        
+@app.get("/random/{name}", response_model=SuccessResponse)
+async def random_cecan(name: str):
+    url = f"https://raw.githubusercontent.com/Kira-Master/database/main/cecan/{name}.json"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                if resp.status != 200:
+                    return SuccessResponse(
+                        status="False",
+                        data={"error": f"File not found or invalid name: {name}"}
+                    )
+                data = await resp.json()
+        
+        # Expecting JSON file structure like: { "result": ["https://link1", "https://link2", ...] }
+        links = data.get("result") or data  # fallback if plain list
+        if not links:
+            return SuccessResponse(
+                status="False",
+                data={"error": "No links found in JSON file"}
+            )
+        
+        random_link = random.choice(links)
+
+        return SuccessResponse(
+            status="True",
+            data={"url": random_link}
+        )
+
+    except Exception as e:
+        return SuccessResponse(
+            status="False",
+            data={"error": f"Error: {e}"}
+        )        
