@@ -13,7 +13,8 @@ import asyncio
 import datetime
 from itertools import islice
 from typing import Optional
-from models import SuccessResponse, ErrorResponse, API_VERSION
+import pkg_resources
+from models import SuccessResponse, ErrorResponse, API_VERSION, PackagesResponse
 from fastapi.middleware.cors import CORSMiddleware
 from xnxx_api import search_filters
 from xnxx_api import Client as xnxx_client
@@ -186,7 +187,7 @@ async def xnxx_search(
     upload_time: Optional[str] = None,
     length: Optional[str] = None,
     mode: Optional[str] = None,
-    # page: Optional[int] = None,
+    page: Optional[int] = 0,
     results: Optional[int] = 20
 ):
     data_dict = {
@@ -234,12 +235,13 @@ async def xnxx_search(
         # Perform the search with only the provided parameters
         c = xnxx_client()
         search = c.search(**search_kwargs)
+        videos_iter = search.videos(pages=page)
         # response = search.videos
         # if results is not None:
             # response = islice(res, results)
 
         results_list = []
-        for x in islice(search.videos, results):
+        for x in islice(videos_iter, results):
             results_list.append({
                 "title": x.title,
                 "url": x.url,
@@ -596,3 +598,20 @@ async def random_cecan(name: str):
             status="False",
             data={"error": f"Error: {e}"}
         )
+        
+        
+@app.get("/system/pip", response_model=PackagesResponse)
+async def get_pip_packages():
+    """Return all installed pip packages with versions."""
+    try:
+        installed = {dist.project_name: dist.version for dist in pkg_resources.working_set}
+
+        return PackagesResponse(
+            packages=installed
+        )
+
+    except Exception as e:
+        return PackagesResponse(
+            status="False",
+            packages={"error": str(e)}
+        )        

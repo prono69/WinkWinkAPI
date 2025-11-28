@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional
 
 # Constants
 CREATOR = "EyePatch"
-API_VERSION = "1.3.5"
+API_VERSION = "1.3.7"
 
 # ----- Pydantic Models -----
 class SuccessResponse(BaseModel):
@@ -24,3 +24,9 @@ class ItemPayload(BaseModel):
     description: Optional[str] = None
     price: float
     tags: list[str] = []
+    
+class PackagesResponse(BaseModel):
+    status: str = "True"
+    creator: str = CREATOR
+    api_version: str = API_VERSION
+    packages: dict
