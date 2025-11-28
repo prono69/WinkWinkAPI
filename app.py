@@ -13,7 +13,7 @@ import asyncio
 import datetime
 from itertools import islice
 from typing import Optional
-import pkg_resources
+from importlib.metadata import distributions
 from models import SuccessResponse, ErrorResponse, API_VERSION, PackagesResponse
 from fastapi.middleware.cors import CORSMiddleware
 from xnxx_api import search_filters
@@ -602,16 +602,21 @@ async def random_cecan(name: str):
         
 @app.get("/system/pip", response_model=PackagesResponse)
 async def get_pip_packages():
-    """Return all installed pip packages with versions."""
     try:
-        installed = {dist.project_name: dist.version for dist in pkg_resources.working_set}
+        packages = {}
 
-        return PackagesResponse(
-            packages=installed
-        )
+        for dist in distributions():
+            name = dist.metadata["Name"]
+            version = dist.version
+            packages[name] = version
+
+        # Optional: sort by key
+        packages = dict(sorted(packages.items(), key=lambda x: x[0].lower()))
+
+        return PackagesResponse(packages=packages)
 
     except Exception as e:
         return PackagesResponse(
             status="False",
             packages={"error": str(e)}
-        )        
+        )
