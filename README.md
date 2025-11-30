@@ -1,16 +1,29 @@
+<div align="center">
+  <img src="https://media.giphy.com/media/BkqSYWqv8Zfva/giphy.gif" 
+       alt="Cultured API" 
+       width="500">
+
+  <h1>🌸 Cultured API</h1>
+
+  <h3><em>An elegant NSFW content API built with FastAPI</em></h3>
+
+  <br>
+
+  ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+  ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+  ![NSFW](https://img.shields.io/badge/NSFW-FF2D95?style=for-the-badge)
+</div>
+
+<br>
+
 ---
 
-🌸 Cultured API
+## 🚀 Overview
 
-An elegant NSFW content API built with FastAPI
+_Cultured API is a fast, asynchronous, and highly scalable REST API built using FastAPI._
+_It serves NSFW / hentai / lewd content through clean endpoints, optimized responses, and a modern async architecture._
 
-
----
-
-Cultured API is a fast, asynchronous, and highly scalable REST API built using FastAPI.  
-It serves NSFW / hentai / lewd content through clean endpoints, optimized responses, and a modern async architecture.
-
-Whether you're building bots, apps, or automated scripts, Cultured API gives you a reliable backend to fetch curated NSFW data programmatically.
+_Whether you're building bots, apps, or automated scripts, Cultured API gives you a reliable backend to fetch curated NSFW data programmatically._
 
 ---
 
@@ -25,4 +38,20 @@ Whether you're building bots, apps, or automated scripts, Cultured API gives you
 - 🛠 Easy deployment on Vercel, Railway, Render, or VPS
 
 ---
+
+
+## Documentation
+
+[Documentation](https://napi.alam.eu.org)
+
+
+## Contributing
+
+_Contributions & PRs are always welcome!_
+
+
+
+## Feedback
+
+If you have any feedback, please reach out to me at api@alam.eu.org
 
