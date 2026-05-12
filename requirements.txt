@@ -9,6 +9,6 @@ jinja2
 phub
 xnxx_api
 xvideos_api
-git+https://github.com/prono69/EPorner_API.git
+https://github.com/prono69/EPorner_API/archive/refs/heads/master.zip
 # git+https://github.com/EchterAlsFake/hqporner_api.git
 hqporner_api
