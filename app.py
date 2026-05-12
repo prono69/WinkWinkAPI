@@ -35,7 +35,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-templates = Jinja2Templates(directory="templates")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+templates = Jinja2Templates(
+    directory=os.path.join(BASE_DIR, "templates")
+)
 SERVER_START_TIME = datetime.datetime.utcnow()
 
 # ----- Helper Functions -----
@@ -96,12 +99,18 @@ def format_uptime(start_time):
     return ", ".join(parts)
     
 # Mount static folder
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount(
+    "/static",
+    StaticFiles(directory=os.path.join(BASE_DIR, "static")),
+    name="static"
+)
 
 # Serve favicon
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
-    return FileResponse(os.path.join("static", "favicon.ico"))
+    return FileResponse(
+        os.path.join(BASE_DIR, "static", "favicon.ico")
+    )
 
 # ----- API Endpoints -----
 
