@@ -620,3 +620,56 @@ async def get_pip_packages():
             status="False",
             packages={"error": str(e)}
         )
+
+
+@app.get("/nsfw/{tag}", response_model=SuccessResponse)
+async def get_konachan_image(tag: str):
+    # Konachan JSON API endpoint
+    api_url = "https://konachan.com/post.json"
+    
+    # Configuration for the API request
+    params = {
+        "tags": tag,
+        "limit": 100  # Fetch up to 100 posts to pick a random one
+    }
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(api_url, params=params, timeout=10) as resp:
+                if resp.status != 200:
+                    return SuccessResponse(
+                        status="False",
+                        data={"error": f"Konachan API returned status {resp.status}"}
+                    )
+                
+                data = await resp.json()
+
+                if not data or len(data) == 0:
+                    return SuccessResponse(
+                        status="False",
+                        data={"error": f"No images found for tag: {tag}"}
+                    )
+
+                # Pick a random post from the returned list
+                random_post = random.choice(data)
+                
+                # 'file_url' is the direct link to the image
+                random_link = random_post.get("file_url")
+
+                if not random_link:
+                    return SuccessResponse(
+                        status="False",
+                        data={"error": "Image URL not found in API response"}
+                    )
+
+                return SuccessResponse(
+                    status="True",
+                    data={"url": random_link}
+                )
+
+    except Exception as e:
+        return SuccessResponse(
+            status="False",
+            data={"error": f"Internal Error: {str(e)}"}
+        )
+        
